@@ -35,6 +35,14 @@ D. "My calendar is so full I have a meeting to discuss why I have no time
    states its own joke twice ("so full" and "no time") instead of letting
    the punchline do the work.
 
+E. "I told HR my workload was crushing me, so they sent me a link to a
+   mindfulness webinar."
+   Loses: the target is a process, not a person in a moment, and the
+   punchline is a familiar "HR sends a link" complaint rather than a
+   twist. It reads as a gripe with a joke attached, and "mindfulness
+   webinar" dates the line to one era of office life instead of a
+   situation that stays recognisable.
+
 Writing passes on the winner
 ----------------------------
 Pass 1: the first draft read "I asked IT for help and they gave me a
@@ -67,17 +75,47 @@ def check_gate(text):
         raise ValueError("entry must be a single line")
 
 
+def guard_entry(text):
+    """Gate guard: run the sealed gate, then the entry's own shape rules.
+
+    Beyond check_gate's 1-200 / single-line / non-blank rules, the chosen
+    line must also arrive exactly as written: no leading or trailing
+    whitespace, no doubled spaces, and it must end on its punchline's
+    full stop. These are the mistakes a careless rewrite would introduce,
+    so they are checked here rather than trusted to the eye.
+    """
+    check_gate(text)
+    if text != text.strip():
+        raise ValueError("entry must not have leading or trailing whitespace")
+    if "  " in text:
+        raise ValueError("entry must not contain doubled spaces")
+    if not text.endswith("."):
+        raise ValueError("entry must end with a full stop")
+    if "ticket" not in text:
+        raise ValueError("entry must keep the ticket word the joke turns on")
+
+
 def entry_path():
     out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
     os.makedirs(out_dir, exist_ok=True)
     return os.path.join(out_dir, "entry.txt")
 
 
-def main():
-    check_gate(ENTRY)
-    path = entry_path()
+def write_entry(path, text):
+    """Write one entry line plus its trailing newline.
+
+    The trailing newline is deliberate, not incidental: the judge reads
+    the file as one line of text, and a file with no final newline is a
+    truncated line to many readers. ENTRY itself carries no newline, so
+    exactly one is added here and nowhere else.
+    """
     with open(path, "w", encoding="utf-8") as f:
-        f.write(ENTRY + "\n")
+        f.write(text + "\n")
+
+
+def main():
+    guard_entry(ENTRY)
+    write_entry(entry_path(), ENTRY)
 
 
 if __name__ == "__main__":
